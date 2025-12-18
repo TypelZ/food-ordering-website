@@ -9,10 +9,22 @@ const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs');
 
-// Initialize S3 client (uses IAM role credentials automatically on EC2)
-const s3Client = new S3Client({
+// Initialize S3 client
+// Uses explicit credentials if provided (for Learner Lab), otherwise IAM role
+const s3Config = {
   region: process.env.AWS_REGION || 'us-east-1'
-});
+};
+
+// Add explicit credentials for Learner Lab (where IAM roles can't be created)
+if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+  s3Config.credentials = {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    sessionToken: process.env.AWS_SESSION_TOKEN // Required for Learner Lab
+  };
+}
+
+const s3Client = new S3Client(s3Config);
 
 const BUCKET_NAME = process.env.S3_BUCKET || 'food-images-bucket';
 const UPLOADS_DIR = path.join(__dirname, '..', 'uploads');

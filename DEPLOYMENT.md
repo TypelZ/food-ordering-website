@@ -25,7 +25,7 @@ Internet → EC2 (Nginx + Node.js) → RDS MySQL
    - Template: Free tier
    - DB instance identifier: `food-ordering-db`
    - Master username: `admin`
-   - Master password: (choose a strong password)
+   - Master password: 11111111
 4. Under **Connectivity**:
    - VPC: Default VPC
    - Public access: Yes (for Learner Lab)
@@ -34,7 +34,7 @@ Internet → EC2 (Nginx + Node.js) → RDS MySQL
    - Initial database name: `food_ordering`
 6. Click **Create database**
 7. Wait for status to become "Available"
-8. Note the **Endpoint** (e.g., `food-ordering-db.xxxxx.us-east-1.rds.amazonaws.com`)
+8. Note the **Endpoint** (`food-ordering-db.cb2ugwomyf34.us-east-1.rds.amazonaws.com`)
 
 ### Configure Security Group
 
@@ -49,7 +49,7 @@ Internet → EC2 (Nginx + Node.js) → RDS MySQL
 
 1. Go to **S3** in AWS Console
 2. Click **Create bucket**
-3. Bucket name: `food-images-<your-unique-id>`
+3. Bucket name: `food-images-abc`
 4. Region: Same as your EC2/RDS
 5. Uncheck "Block all public access"
 6. Acknowledge the warning
@@ -98,14 +98,14 @@ Internet → EC2 (Nginx + Node.js) → RDS MySQL
 3. Configure:
    - Name: `food-ordering-server`
    - AMI: Amazon Linux 2023
-   - Instance type: t2.micro (free tier)
-   - Key pair: Create new or use existing
+   - Instance type: t3.micro (free tier)
+   - Key pair: vockey
    - Network settings:
      - Allow SSH (port 22)
      - Allow HTTP (port 80)
      - Allow HTTPS (port 443)
 4. Click **Launch instance**
-5. Note the **Public IPv4 address**
+5. Note the **Public IPv4 address** ('34.235.143.112')
 
 ## Step 4: Connect to EC2
 
@@ -159,17 +159,17 @@ nano .env
 Add to `.env`:
 
 ```
-DB_HOST=your-rds-endpoint.region.rds.amazonaws.com
+DB_HOST=food-ordering-db.cb2ugwomyf34.us-east-1.rds.amazonaws.com
 DB_PORT=3306
 DB_USER=admin
-DB_PASS=your-rds-password
+DB_PASS=11111111
 DB_NAME=food_ordering
 
-JWT_SECRET=your-super-secret-key-change-this
+JWT_SECRET=11111111111111111111
 JWT_EXPIRES_IN=24h
 
 AWS_REGION=us-east-1
-S3_BUCKET=your-s3-bucket-name
+S3_BUCKET=food-images-abc
 
 PORT=3000
 NODE_ENV=production
