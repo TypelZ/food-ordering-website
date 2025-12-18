@@ -129,12 +129,16 @@ const deleteImageLocal = async (imageUrl) => {
   }
 };
 
-// Use S3 in production, local storage in development
-const isProduction = process.env.NODE_ENV === 'production' && process.env.S3_BUCKET;
+// Use S3 only when bucket AND credentials are configured, otherwise local storage
+const useS3 = process.env.S3_BUCKET && 
+              process.env.AWS_ACCESS_KEY_ID && 
+              process.env.AWS_SECRET_ACCESS_KEY;
+
+console.log(`Image storage: ${useS3 ? 'S3 (' + process.env.S3_BUCKET + ')' : 'Local (backend/uploads/)'}`);
 
 module.exports = {
-  uploadImage: isProduction ? uploadImageToS3 : uploadImageLocal,
-  deleteImage: isProduction ? deleteImageFromS3 : deleteImageLocal,
+  uploadImage: useS3 ? uploadImageToS3 : uploadImageLocal,
+  deleteImage: useS3 ? deleteImageFromS3 : deleteImageLocal,
   // Export for testing
   _uploadImageToS3: uploadImageToS3,
   _uploadImageLocal: uploadImageLocal
