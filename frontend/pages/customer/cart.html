@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cart - Food Order</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <div id="navbar-container"></div>
+    
+    <div class="container py-4">
+      <div class="page-header">
+        <h1>🛒 Your Cart</h1>
+      </div>
+
+      <div class="row">
+        <div class="col-lg-8">
+          <div class="card">
+            <div class="card-body" id="cartItems">
+              <!-- Cart items will be loaded here -->
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="card">
+            <div class="card-header">Order Summary</div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between mb-3">
+                <span>Items:</span>
+                <span id="itemCount">0</span>
+              </div>
+              <hr>
+              <div class="cart-total d-flex justify-content-between">
+                <span>Total:</span>
+                <span id="cartTotal">RM 0.00</span>
+              </div>
+              
+              <div class="mt-3">
+                <label for="deliveryAddress" class="form-label">Delivery Address</label>
+                <textarea class="form-control" id="deliveryAddress" rows="3" placeholder="Enter your delivery address"></textarea>
+              </div>
+              
+              <button class="btn btn-primary w-100 mt-3" id="checkoutBtn" onclick="checkout()">
+                Proceed to Checkout
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/api.js"></script>
+  <script>
+    protectPage('CUSTOMER');
+    initPage();
+
+    async function loadCart() {
+      const result = await api.get('/cart');
+      const container = document.getElementById('cartItems');
+
+      if (!result.success || result.data.items.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div>🛒</div>
+            <h4>Your cart is empty</h4>
+            <p>Add some delicious items from our menu!</p>
+            <a href="menu.html" class="btn btn-primary">Browse Menu</a>
+          </div>
+        `;
+        document.getElementById('checkoutBtn').disabled = true;
+        return;
+      }
+
+      container.innerHTML = result.data.items.map(item => `
+        <div class="cart-item d-flex align-items-center">
+          <img src="${item.item.image_url || 'https://via.placeholder.com/80x80?text=No+Image'}" 
+               class="rounded me-3" style="width: 80px; height: 80px; object-fit: cover;">
+          <div class="flex-grow-1">
+            <h6 class="mb-1">${item.item.name}</h6>
+            <small class="text-muted">${formatCurrency(item.item.price)} each</small>
+          </div>
+          <div class="quantity-control me-3">
+            <button class="btn btn-outline-secondary btn-sm" onclick="updateQuantity(${item.menuItemId}, ${item.quantity - 1})">-</button>
+            <span class="quantity">${item.quantity}</span>
+            <button class="btn btn-outline-secondary btn-sm" onclick="updateQuantity(${item.menuItemId}, ${item.quantity + 1})">+</button>
+          </div>
+          <div class="text-end me-3" style="min-width: 80px;">
+            <strong>${formatCurrency(item.subtotal)}</strong>
+          </div>
+          <button class="btn btn-outline-danger btn-sm" onclick="removeItem(${item.menuItemId})">×</button>
+        </div>
+      `).join('');
+
+      document.getElementById('itemCount').textContent = result.data.itemCount;
+      document.getElementById('cartTotal').textContent = formatCurrency(result.data.total);
+      document.getElementById('checkoutBtn').disabled = false;
+    }
+
+    async function updateQuantity(menuItemId, quantity) {
+      const result = await api.put('/cart/update', { menuItemId, quantity });
+      if (result.success) {
+        loadCart();
+      } else {
+        showToast(result.message || 'Failed to update cart', 'danger');
+      }
+    }
+
+    async function removeItem(menuItemId) {
+      const result = await api.delete(`/cart/remove/${menuItemId}`);
+      if (result.success) {
+        showToast('Item removed', 'success');
+        loadCart();
+      } else {
+        showToast(result.message || 'Failed to remove item', 'danger');
+      }
+    }
+
+    async function checkout() {
+      const deliveryAddress = document.getElementById('deliveryAddress').value.trim();
+      
+      if (!deliveryAddress) {
+        showToast('Please enter a delivery address', 'warning');
+        return;
+      }
+      
+      const result = await api.post('/orders', { delivery_address: deliveryAddress });
+      
+      if (result.success) {
+        showToast('Order placed successfully!', 'success');
+        setTimeout(() => {
+          window.location.href = 'orders.html';
+        }, 1500);
+      } else {
+        showToast(result.message || 'Checkout failed', 'danger');
+      }
+    }
+
+    // Load user's default address
+    async function loadDefaultAddress() {
+      const result = await api.get('/settings/profile');
+      if (result.success && result.data.user.delivery_address) {
+        document.getElementById('deliveryAddress').value = result.data.user.delivery_address;
+      }
+    }
+
+    loadCart();
+    loadDefaultAddress();
+  </script>
+</body>
+</html>

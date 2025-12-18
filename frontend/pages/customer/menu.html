@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menu - Food Order</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <div id="navbar-container"></div>
+    
+    <div class="container py-4">
+      <div class="page-header d-flex justify-content-between align-items-center">
+        <h1>Our Menu</h1>
+        <a href="cart.html" class="btn btn-primary">
+          🛒 Cart (<span id="cartCount">0</span>)
+        </a>
+      </div>
+
+      <div id="menuContainer" class="row g-4">
+        <!-- Menu items will be loaded here -->
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/api.js"></script>
+  <script>
+    protectPage('CUSTOMER');
+    initPage();
+
+    async function loadMenu() {
+      const result = await api.get('/menu');
+      const container = document.getElementById('menuContainer');
+
+      if (!result.success || result.data.items.length === 0) {
+        container.innerHTML = `
+          <div class="col-12">
+            <div class="empty-state">
+              <div>🍽️</div>
+              <h4>No menu items available</h4>
+              <p>Check back later for delicious options!</p>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = result.data.items.map(item => `
+        <div class="col-md-4 col-lg-3">
+          <div class="card menu-card">
+            <img src="${item.image_url || 'https://via.placeholder.com/300x200?text=No+Image'}" 
+                 class="card-img-top" alt="${item.name}">
+            <div class="card-body">
+              <h5 class="card-title">${item.name}</h5>
+              <p class="card-text text-muted">${item.description || 'No description'}</p>
+              <div class="d-flex justify-content-between align-items-center mt-auto">
+                <span class="price">${formatCurrency(item.price)}</span>
+              </div>
+              <div class="d-flex align-items-center justify-content-between mt-2">
+                <div class="quantity-control">
+                  <button class="btn btn-outline-secondary btn-sm" onclick="changeQty(${item.id}, -1)">-</button>
+                  <span class="quantity" id="qty-${item.id}">1</span>
+                  <button class="btn btn-outline-secondary btn-sm" onclick="changeQty(${item.id}, 1)">+</button>
+                </div>
+                <button class="btn btn-primary btn-sm" onclick="addToCart(${item.id})">
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function changeQty(itemId, delta) {
+      const qtyEl = document.getElementById(`qty-${itemId}`);
+      let qty = parseInt(qtyEl.textContent) + delta;
+      if (qty < 1) qty = 1;
+      if (qty > 99) qty = 99;
+      qtyEl.textContent = qty;
+    }
+
+    async function addToCart(menuItemId) {
+      const qtyEl = document.getElementById(`qty-${menuItemId}`);
+      const quantity = parseInt(qtyEl.textContent);
+      
+      const result = await api.post('/cart/add', { menuItemId, quantity });
+      
+      if (result.success) {
+        showToast(`${quantity} item(s) added to cart!`, 'success');
+        updateCartCount();
+        qtyEl.textContent = '1'; // Reset quantity after adding
+      } else {
+        showToast(result.message || 'Failed to add item', 'danger');
+      }
+    }
+
+    async function updateCartCount() {
+      const result = await api.get('/cart');
+      if (result.success) {
+        document.getElementById('cartCount').textContent = result.data.itemCount;
+      }
+    }
+
+    loadMenu();
+    updateCartCount();
+  </script>
+</body>
+</html>

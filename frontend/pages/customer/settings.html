@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - Food Order</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <div id="navbar-container"></div>
+    
+    <div class="container py-4">
+      <div class="page-header">
+        <h1>⚙️ Settings</h1>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-lg-6">
+          <div class="card">
+            <div class="card-header">Profile Information</div>
+            <div class="card-body">
+              <form id="profileForm">
+                <div class="mb-3">
+                  <label for="nickname" class="form-label">Nickname</label>
+                  <input type="text" class="form-control" id="nickname" required>
+                </div>
+                <div class="mb-3">
+                  <label for="email" class="form-label">Email</label>
+                  <input type="email" class="form-control" id="email" required>
+                </div>
+                <div class="mb-3">
+                  <label for="delivery_address" class="form-label">Delivery Address</label>
+                  <textarea class="form-control" id="delivery_address" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+              </form>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="card">
+            <div class="card-header">Change Password</div>
+            <div class="card-body">
+              <form id="passwordForm">
+                <div class="mb-3">
+                  <label for="currentPassword" class="form-label">Current Password</label>
+                  <input type="password" class="form-control" id="currentPassword" required>
+                </div>
+                <div class="mb-3">
+                  <label for="newPassword" class="form-label">New Password</label>
+                  <input type="password" class="form-control" id="newPassword" minlength="6" required>
+                </div>
+                <div class="mb-3">
+                  <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                  <input type="password" class="form-control" id="confirmPassword" minlength="6" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Change Password</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/api.js"></script>
+  <script>
+    protectPage('CUSTOMER');
+    initPage();
+
+    async function loadProfile() {
+      const result = await api.get('/settings/profile');
+      if (result.success) {
+        document.getElementById('nickname').value = result.data.user.nickname;
+        document.getElementById('email').value = result.data.user.email;
+        document.getElementById('delivery_address').value = result.data.user.delivery_address || '';
+      }
+    }
+
+    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const data = {
+        nickname: document.getElementById('nickname').value,
+        email: document.getElementById('email').value,
+        delivery_address: document.getElementById('delivery_address').value
+      };
+
+      const result = await api.put('/settings/profile', data);
+      
+      if (result.success) {
+        showToast('Profile updated successfully!', 'success');
+        // Update stored user
+        localStorage.setItem('user', JSON.stringify(result.data.user));
+        initPage();
+      } else {
+        showToast(result.message || 'Failed to update profile', 'danger');
+      }
+    });
+
+    document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (newPassword !== confirmPassword) {
+        showToast('Passwords do not match', 'danger');
+        return;
+      }
+
+      const data = {
+        currentPassword: document.getElementById('currentPassword').value,
+        newPassword: newPassword
+      };
+
+      const result = await api.put('/settings/password', data);
+      
+      if (result.success) {
+        showToast('Password changed successfully!', 'success');
+        document.getElementById('passwordForm').reset();
+      } else {
+        showToast(result.message || 'Failed to change password', 'danger');
+      }
+    });
+
+    loadProfile();
+  </script>
+</body>
+</html>

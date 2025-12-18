@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Management - Food Order</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+  <div class="dashboard-container">
+    <div id="navbar-container"></div>
+    
+    <div class="container py-4">
+      <div class="page-header">
+        <h1>📦 Order Management</h1>
+      </div>
+
+      <div id="ordersContainer">
+        <!-- Orders will be loaded here -->
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../../js/auth.js"></script>
+  <script src="../../js/api.js"></script>
+  <script>
+    protectPage('STAFF');
+    initPage();
+
+    const statuses = ['Pending', 'Preparing', 'Ready', 'Completed', 'Cancelled'];
+
+    async function loadOrders() {
+      const result = await api.get('/orders');
+      const container = document.getElementById('ordersContainer');
+
+      if (!result.success || result.data.orders.length === 0) {
+        container.innerHTML = `
+          <div class="card">
+            <div class="card-body">
+              <div class="empty-state">
+                <div>📦</div>
+                <h4>No orders yet</h4>
+                <p>Orders will appear here when customers place them.</p>
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = result.data.orders.map(order => `
+        <div class="card order-card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Order #${order.id}</span>
+            <div class="d-flex align-items-center gap-2">
+              <select class="form-select form-select-sm" style="width: auto;" onchange="updateStatus(${order.id}, this.value)">
+                ${statuses.map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <small class="text-muted">Customer</small>
+                <p class="mb-0">${order.user ? order.user.nickname : 'Unknown'}</p>
+              </div>
+              <div class="col-md-4">
+                <small class="text-muted">Delivery Address</small>
+                <p class="mb-0">${order.user && order.user.delivery_address ? order.user.delivery_address : 'Not provided'}</p>
+              </div>
+              <div class="col-md-4 text-md-end">
+                <small class="text-muted">Order Date</small>
+                <p class="mb-0">${formatDate(order.created_at)}</p>
+              </div>
+            </div>
+            <hr>
+            <div class="row">
+              <div class="col-md-8">
+                <h6>Items:</h6>
+                <ul class="list-unstyled mb-0">
+                  ${order.items.map(item => `
+                    <li class="d-flex justify-content-between py-1">
+                      <span>${item.menuItem ? item.menuItem.name : 'Item'} × ${item.quantity}</span>
+                      <span>${formatCurrency(item.price * item.quantity)}</span>
+                    </li>
+                  `).join('')}
+                </ul>
+              </div>
+              <div class="col-md-4 text-md-end">
+                <small class="text-muted">Total</small>
+                <h4 class="mb-0">${formatCurrency(order.total_price)}</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function updateStatus(orderId, status) {
+      const result = await api.put(`/orders/${orderId}/status`, { status });
+      
+      if (result.success) {
+        showToast('Order status updated!', 'success');
+      } else {
+        showToast(result.message || 'Failed to update status', 'danger');
+        loadOrders(); // Reload to reset dropdown
+      }
+    }
+
+    loadOrders();
+    // Auto-refresh every 30 seconds
+    setInterval(loadOrders, 30000);
+  </script>
+</body>
+</html>
