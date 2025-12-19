@@ -100,15 +100,15 @@ AMI is a snapshot of a configured EC2 instance, including the OS, application co
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         Client Browser                          │
+┌────────────────────────────────────────────────────────────────┐
+│                         Client Browser                         │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │              Frontend (HTML/CSS/JS/Bootstrap)            │   │
-│  │  - Static pages served by Nginx                          │   │
-│  │  - Fetch API for backend communication                   │   │
-│  │  - JWT stored in localStorage                            │   │
+│  │              Frontend (HTML/CSS/JS/Bootstrap)           │   │
+│  │  - Static pages served by Nginx                         │   │
+│  │  - Fetch API for backend communication                  │   │
+│  │  - JWT stored in localStorage                           │   │
 │  └─────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+└────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
@@ -117,27 +117,27 @@ AMI is a snapshot of a configured EC2 instance, including the OS, application co
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    Auto Scaling Group                           │
+┌────────────────────────────────────────────────────────────────┐
+│                    Auto Scaling Group                          │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │                  AWS EC2 Instance(s)                     │   │
+│  │                  AWS EC2 Instance(s)                    │   │
 │  │  ┌─────────────────────────────────────────────────┐    │   │
-│  │  │              Nginx (Port 80)                     │    │   │
-│  │  │  - Reverse proxy to Node.js                      │    │   │
-│  │  │  - Serves static frontend files                  │    │   │
+│  │  │              Nginx (Port 80)                    │    │   │
+│  │  │  - Reverse proxy to Node.js                     │    │   │
+│  │  │  - Serves static frontend files                 │    │   │
 │  │  └─────────────────────────────────────────────────┘    │   │
-│  │                          │                               │   │
-│  │                          ▼                               │   │
+│  │                          │                              │   │
+│  │                          ▼                              │   │
 │  │  ┌─────────────────────────────────────────────────┐    │   │
 │  │  │          PM2 → Node.js (Port 3000)              │    │   │
-│  │  │  - Express REST API                              │    │   │
-│  │  │  - JWT authentication                            │    │   │
-│  │  │  - Role-based authorization                      │    │   │
-│  │  │  - Sequelize ORM                                 │    │   │
-│  │  │  - Local image storage (/uploads)                │    │   │
+│  │  │  - Express REST API                             │    │   │
+│  │  │  - JWT authentication                           │    │   │
+│  │  │  - Role-based authorization                     │    │   │
+│  │  │  - Sequelize ORM                                │    │   │
+│  │  │  - Local image storage (/uploads)               │    │   │
 │  │  └─────────────────────────────────────────────────┘    │   │
 │  └─────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+└────────────────────────────────────────────────────────────────┘
           │                                      │
           ▼                                      ▼
 ┌──────────────────────┐              ┌──────────────────────┐
